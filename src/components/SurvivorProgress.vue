@@ -106,18 +106,13 @@ const survivorProgress = computed(() => {
     return [
         ...getGameDetails(props.gameStart, props.endGameCollapse, props.gameEnd),
         ...events,
-        ...getEvaluation(props.gameStart, lastEvent, missingEvents, 6)
+        ...getEvaluation(props.gameStart, lastEvent, missingEvents)
     ]
 })
 </script>
 
 <template>
-<Card>
-    <template #title>Gen Progress</template>
-    <template #content>
-        <ProgressTable :game-start="gameStart" :event-rows="survivorProgress"/>
-    </template>
-</Card>
+    <ProgressTable :game-start="gameStart" :event-rows="survivorProgress"/>
 </template>
 
 <style scoped>

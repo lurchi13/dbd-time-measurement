@@ -4,7 +4,7 @@ export function getTimeString(timeDiff: number){
     const minutes = Math.floor(timeDiff / 60000)
     const seconds = Math.floor(timeDiff / 1000 % 60)
     const milliseconds = Math.floor(timeDiff % 1000) 
-    let timeString = `${seconds}.${milliseconds}`
+    let timeString = `${seconds.toString().padStart(2, "0")}.${milliseconds.toString().padStart(3, "0")}`
     if (minutes > 0) {
         timeString = `${minutes}:${timeString}`
     }
@@ -71,14 +71,27 @@ export function getGameDetails(gameStart: Date, endGameCollapse: Date | undefine
     ]
 }
 
-export function getEvaluation(gameStart: Date, lastEvent: Date, missingEvents: number, sectionId: number): EventRow[] {
-    const section = {id: sectionId, label: 'Evaluation'} as SectionType
+export function getEvaluation(gameStart: Date, lastEvent: Date, missingEvents: number): EventRow[] {
+    const section = {id: 10, label: 'Evaluation'} as SectionType
     const totalEventTime = lastEvent.getTime() - gameStart.getTime()
-    const averageEventTime = totalEventTime / (8 - missingEvents)
-    const missingPenalty = missingEvents * 30000
+    const completedEvents = 8 - missingEvents
+    let averageEventTime: number
+    let missingPenalty: number
+    let averageEventTimeEvent: EventRow
+    if (completedEvents <= 0){
+        averageEventTime = 0
+        missingPenalty = 900000
+                averageEventTimeEvent = getEmptyEvent(section, "Average Event Time")
+    }
+    else {
+        averageEventTime = totalEventTime / completedEvents
+        missingPenalty = missingEvents * 30000
+        averageEventTimeEvent = getStringEvent(section, "Average Event Time", getTimeString(averageEventTime))
+    }
+    
     const finalAverageEventTime = averageEventTime + missingPenalty
     return [
-        getStringEvent(section, "Average Event Time", getTimeString(averageEventTime)),
+        averageEventTimeEvent,
         getStringEvent(section, "Missing Event Count", missingEvents.toString()),
         getStringEvent(section, "Penalty", getTimeString(missingPenalty)),
         getStringEvent(section, "Average Event Time", getTimeString(finalAverageEventTime))

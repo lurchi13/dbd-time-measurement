@@ -21,7 +21,7 @@ const killerProgress = computed(() => {
     const eventMapping = getKillerEventLookup(props.gameStart, props.events)
     const events = props.survivors.flatMap((survivor, index) => {
         const survivorEvents = eventMapping[survivor.id]
-        const survivorSection = {id: index + 1, label: survivor.name} as SectionType
+        const survivorSection = {id: index + 2, label: survivor.name} as SectionType
 
         const getStageEvent = (times: DateRow | undefined, label: string) => {
             if (times){
@@ -40,18 +40,13 @@ const killerProgress = computed(() => {
     return [
         ...getGameDetails(props.gameStart, props.endGameCollapse, props.gameEnd),
         ...events,
-        ...getEvaluation(props.gameStart, lastEvent, missingEvents, 6)
+        ...getEvaluation(props.gameStart, lastEvent, missingEvents)
     ]
 })
 </script>
 
 <template>
-<Card>
-    <template #title>Killer Progress</template>
-    <template #content>
-        <ProgressTable :game-start="gameStart" :event-rows="killerProgress"/>
-    </template>
-</Card>
+    <ProgressTable :game-start="gameStart" :event-rows="killerProgress"/>
 </template>
 
 <style scoped>

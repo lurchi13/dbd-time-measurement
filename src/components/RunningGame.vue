@@ -8,11 +8,14 @@ import SurvivorProgress from './SurvivorProgress.vue';
 import { useTeamStore } from '../stores/teamStore';
 import KillerProgress from './KillerProgress.vue';
 import type { TeamMember } from '../models/Teams';
+import Drawer from 'primevue/drawer'
 
 const teamStore = useTeamStore()
 const progressStore = useProgressStore()
 const gameStateButtonLabel = computed(() => !progressStore.isRunning ? "Start New Game" : "Game Over")
 const hatchClosed = ref(false)
+const survivorProgressVisible = ref(false) 
+const killerProgressVisible = ref(false)
 const progressButtons = computed(() => {
   const progressEvents = [] as {label: string, eventType: 'gen' | 'exitOpen' | 'hatchEscape'}[]
   progressStore.nextPossibleSurvivorEvents.forEach(event => {
@@ -61,13 +64,27 @@ const survivorEvents = computed(() => {
 </script>
 
 <template>
-  <Button :label="gameStateButtonLabel" @click="handleGameStateChange"/><Timer :start-time="progressStore.gameStart" :end-time="progressStore.currentGameTime"></Timer><br/>
-  <Button v-for="progressButton in progressButtons"  :key="progressButton?.label" :label="progressButton?.label" @click="addEvent(progressButton.eventType)"></Button>
-  <Button v-if="progressStore.hatchSpawned && !hatchClosed" severity="danger" label="Hatch Closed" @click="progressStore.hatchClosed"></Button>
-  <br/>
-  <SurvivorKills />
-  <SurvivorProgress :game-start="progressStore.gameStart" :end-game-collapse="progressStore.endGameCollapseStart ?? undefined" :game-end="progressStore.isRunning ? undefined : progressStore.currentGameTime" :events="progressStore.events"></SurvivorProgress>
-  <KillerProgress :gameStart="progressStore.gameStart" :end-game-collapse="progressStore.endGameCollapseStart ?? undefined" :game-end="progressStore.isRunning ? undefined : progressStore.currentGameTime" :events="progressStore.events" :survivors="survivorEvents"></KillerProgress>
+  <Button :label="gameStateButtonLabel" @click="handleGameStateChange"/><Timer v-if="progressStore.isRunning" :start-time="progressStore.gameStart" :end-time="progressStore.currentGameTime"></Timer><br/>
+  <template v-if="progressStore.isRunning">
+      <Button v-for="progressButton in progressButtons"  :key="progressButton?.label" :label="progressButton?.label" @click="addEvent(progressButton.eventType)"></Button>
+      <Button v-if="progressStore.hatchSpawned && !hatchClosed" severity="danger" label="Hatch Closed" @click="progressStore.hatchClosed"></Button>
+      <br/>
+      <SurvivorKills />
+  </template>
+  <template v-if="!progressStore.isRunning && progressStore.events.length > 0">
+    <div class="card flex justify-center">
+      <Drawer v-model:visible="survivorProgressVisible" header="Survivor Results" class="!w-full md:!w-100 lg:!w-[70rem]">
+          <SurvivorProgress :game-start="progressStore.gameStart" :end-game-collapse="progressStore.endGameCollapseStart ?? undefined" :game-end="progressStore.isRunning ? undefined : progressStore.currentGameTime" :events="progressStore.events"></SurvivorProgress>
+      </Drawer>
+      <Button label="View Survivor Results" @click="survivorProgressVisible = true" />
+      <Drawer v-model:visible="killerProgressVisible" header="Killer Results" position="right" class="!w-full md:!w-100 lg:!w-[70rem]">
+          <KillerProgress :gameStart="progressStore.gameStart" :end-game-collapse="progressStore.endGameCollapseStart ?? undefined" :game-end="progressStore.isRunning ? undefined : progressStore.currentGameTime" :events="progressStore.events" :survivors="survivorEvents"></KillerProgress>
+      </Drawer>
+      <Button label="View Killer Results" @click="killerProgressVisible = true" />
+    </div>
+  </template>
+  
+  
 </template>
 
 <style scoped>
