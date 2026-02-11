@@ -56,7 +56,7 @@ function addEvent(event: 'gen' | 'exitOpen' | 'hatchEscape'){
 }
 
 const survivorEvents = computed(() => {
-  return teamStore.survivors?.map(survivor => {return {name: survivor.toString(), id: survivor} as TeamMember})
+  return teamStore.survivors?.map(survivor => {return {name: survivor.toString(), id: survivor} as TeamMember}) ?? []
 })
 </script>
 
