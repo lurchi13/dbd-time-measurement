@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import Card from 'primevue/card';
 
 import { computed } from 'vue';
 import { getEvaluation, getGameDetails, type SectionType, type EventRowType, type EventRow, getTimerEvent, getEmptyEvent, getStringEvent  } from '../utils';
