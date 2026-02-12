@@ -17,10 +17,6 @@ const props = defineProps({
     title: {
         type: String,
         required: true
-    },
-    teams: {
-        type: Array<Team>,
-        required: true
     }
 })
 
@@ -74,8 +70,6 @@ function editTeamMember(event: DataTableCellEditCompleteEvent){
     }
 
     if (data.id === undefined){
-
-
         teamStore.addTeamMember(selectedTeam.value , newValue)
         addedMember.value = false
         return
@@ -93,7 +87,7 @@ function addTeamMember() {
     <Card>
         <template #title>{{title}}</template>
         <template #content>
-            <Select :options="teams" option-value="name" option-label="name" v-model="selectedTeam">
+            <Select :options="teamStore.teams" option-value="name" option-label="name" v-model="selectedTeam">
 
             </Select>
             <br/>
@@ -110,8 +104,7 @@ function addTeamMember() {
                         </template>
                     </Column>
                     <template #footer>
-                        <Button v-if="addedMember" label="Add member" @click="addTeamMember">
-                            
+                        <Button v-if="!addedMember" label="Add member" @click="addTeamMember">
                         </Button>
                     </template>
                 </DataTable>

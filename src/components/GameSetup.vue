@@ -10,29 +10,6 @@ import { useRouter } from 'vue-router';
 const teamStore = useTeamStore()
 const router = useRouter()
 
-const teams = ref<Team[]>([
-    {
-        name: "Sables",
-        members: [
-            {id: 1, name: "A"},
-            {id: 2, name: "B"},
-            {id: 3, name: "C"},
-            {id: 4, name: "D"},
-            {id: 5, name: "E"},
-        ]
-    },
-    {
-        name: "Woods",
-        members: [
-            {id: 6, name: "F"},
-            {id: 7, name: "G"},
-            {id: 8, name: "H"},
-            {id: 9, name: "I"},
-            {id: 10, name: "J"},
-        ]
-    }
-])
-
 const killerTeam = ref<string>()
 const killer = ref<number[]>([])
 
@@ -68,6 +45,15 @@ const errorMessage = computed(() => {
     else if (killerMessage){
         errorMessage = killerMessage.charAt(0).toUpperCase() + killerMessage.substring(1) + " was selected"
     }
+    if (survivorTeam.value === killerTeam.value){
+        if (errorMessage){
+            errorMessage += " and different teams must be chosen"
+        }
+        else {
+            errorMessage = "Different teams must be chosen"
+        }
+    }
+
     return errorMessage
 })
 
@@ -85,12 +71,27 @@ function confirmChoices(){
 
     teamStore.chooseKiller(killerTeam.value, killer.value[0])
     teamStore.chooseSurvivors(survivorTeam.value, survivors.value)
+ 
     router.push('/run')
 }
 
 
 function selectSurvivor(id: number) {
     survivors.value = [...survivors.value, id]
+}
+
+function changeSurvivorTeam(newSurvivorTeam: string | undefined){
+    if (newSurvivorTeam !== survivorTeam.value){
+        survivorTeam.value = newSurvivorTeam
+        survivors.value = []
+    }
+}
+
+function changeKillerTeam(newKillerTeam: string | undefined){
+    if (newKillerTeam !== killerTeam.value){
+        killerTeam.value = newKillerTeam
+        killer.value = []
+    }
 }
 
 function selectKiller(id: number){
@@ -100,8 +101,8 @@ function selectKiller(id: number){
 
 <template>
     <div class="container">
-        <TeamSetup title="Survivors" :teams="teams" v-model:selected-team="survivorTeam" v-model:selected-members="survivors" @select-member="selectSurvivor"></TeamSetup>
-        <TeamSetup title="Killer" :teams="teams" v-model:selected-team="killerTeam" v-model:selected-members="killer" @select-member="selectKiller"></TeamSetup>
+        <TeamSetup title="Survivors" :selected-team="survivorTeam" @update:selected-team="changeSurvivorTeam" v-model:selected-members="survivors" @select-member="selectSurvivor"></TeamSetup>
+        <TeamSetup title="Killer" :selected-team="killerTeam" @update:selected-team="changeKillerTeam" v-model:selected-members="killer" @select-member="selectKiller"></TeamSetup>
     </div>
     
     <Button :disabled="errorMessage.length > 0" label="Confirm Teams" @click="confirmChoices">

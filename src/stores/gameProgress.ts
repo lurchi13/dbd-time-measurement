@@ -1,6 +1,8 @@
 import { defineStore } from "pinia"
 import { computed, ref } from "vue"
 import type { FirstHook, SurvivorDead, GenDone, Escaped, ExitOpen, HatchEscape, EventType, SurvivorEventType, KillerEventType } from "../models/ProgressEvents"
+import { useTeamStore } from "./teamStore"
+
 
 interface DateRow {
     referenceTime: Date,
@@ -85,13 +87,15 @@ export const useProgressStore = defineStore('progress', () => {
         }
     }
 
-    function startGame(survivorIds: number[]){
-        if (survivorIds.length !== 4){
-            console.error('Could not start game, not 4 survivors')
+    function startGame(){
+        const teamStore = useTeamStore()
+
+        if (!teamStore.ready){
+            console.error("Could not start game, select teams first")
             return
         }
 
-        internalAliveSurvivors.value = survivorIds
+        internalAliveSurvivors.value = teamStore.survivorIds
         exitOpened.value = false
         deadSurvivorCount.value = 0
         escapedSurvivorCount.value = 0

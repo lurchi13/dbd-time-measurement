@@ -25,10 +25,10 @@ export const useTeamStore = defineStore('teams', () => {
             ]
         }
     ])
-    const killerTeam = ref<string>()
-    const killer = ref<number>()
-    const survivorTeam = ref<string>()
-    const survivors = ref<number[]>()
+    const internalKillerTeam = ref<string>()
+    const internalKiller = ref<number>()
+    const internalSurvivorTeam = ref<string>()
+    const internalSurvivors = ref<number[]>()
 
     function getTeam(teamName: string) : Team | undefined{
         return teams.value.find(team => team.name === teamName)
@@ -41,7 +41,7 @@ export const useTeamStore = defineStore('teams', () => {
             return 
         }
 
-        return team.members.find(member => member.id = memberId)
+        return team.members.find(member => member.id === memberId)
     }
 
     function addTeamMember(teamName: string, newMember: string): number | undefined {
@@ -52,7 +52,7 @@ export const useTeamStore = defineStore('teams', () => {
             return 
         }
         team.members = [...team.members, {id: newId, name: newMember}]
-        teams.value = [...teams.value]
+         teams.value = [...teams.value]
         return newId
     }
 
@@ -81,8 +81,8 @@ export const useTeamStore = defineStore('teams', () => {
         if (!checkTeamMemberExists(teamName, memberId)){
             return false
         }
-        killerTeam.value = teamName
-        killer.value = memberId
+        internalKillerTeam.value = teamName
+        internalKiller.value = memberId
         return true
     }
 
@@ -95,30 +95,50 @@ export const useTeamStore = defineStore('teams', () => {
             console.error("Not all members exist in the team!")
             return false
         }
-        survivorTeam.value = teamName
-        survivors.value = [...memberIds]
+        internalSurvivorTeam.value = teamName
+        internalSurvivors.value = [...memberIds]
         return true
     }
 
-    const survivorNames = computed(() => {
-        if (survivorTeam.value === undefined){
+    const survivorTeam = computed(() => {
+        return internalSurvivorTeam.value
+    })
+
+    const survivorIds = computed(() => {
+        return internalSurvivors.value ?? []
+    })
+
+    const survivors = computed((): TeamMember[] => {
+        const teamInformation = teams.value.find(team => team.name === internalSurvivorTeam.value)
+
+        console.log(teamInformation)
+
+        if (teamInformation === undefined){
             return []
         }
 
-        const team = getTeam(survivorTeam.value)
-        if (team === undefined){
-            return []
-        }
-        return team.members.filter(member => survivors.value?.includes(member.id)).map(member => member.name)
+        console.log(teamInformation.members.filter(member => survivorIds.value?.includes(member.id)))
 
+        return teamInformation.members.filter(member => survivorIds.value?.includes(member.id)) ?? []
+    })
+
+    const killerId = computed(() => {
+        return internalKiller.value
+    })
+
+    const ready = computed(() => {
+        return internalSurvivorTeam.value && internalKillerTeam.value && internalKiller.value && internalSurvivors.value?.length === 4
     })
 
     return {
         teams,
-        killerTeam,
-        killer,
+        internalKillerTeam,
+        internalKiller,
         survivorTeam,
+        survivorIds,
         survivors,
+        killerId,
+        ready,
         getTeam,
         getTeamMember,
         checkTeamExists,
@@ -126,8 +146,7 @@ export const useTeamStore = defineStore('teams', () => {
         addTeamMember,
         renameTeamMember,
         chooseKiller,
-        chooseSurvivors,
-        survivorNames
+        chooseSurvivors
     }
 
 })

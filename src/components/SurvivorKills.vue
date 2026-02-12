@@ -14,25 +14,30 @@ const teamStore = useTeamStore()
 const survivorTimes = computed(() => {
     const survivors = teamStore.survivors ?? []
 
-    return survivors.map(survivorId => {
-        return {...(progressStore.killerEvents[survivorId] ?? {}), survivorName: survivorId, alive: progressStore.aliveSurvivors.includes(survivorId) }
+    return survivors.map(survivor => {
+        return {...(progressStore.killerEvents[survivor.id] ?? {}), survivorName: survivor.name, alive: progressStore.aliveSurvivors.includes(survivor.id), survivorId: survivor.id }
     })
 })
 
 function updateTimes(rowIndex: number){
     const row = survivorTimes.value[rowIndex]
 
+    console.log(row)
+
     if (row === undefined){
         console.error("Could not find row!")
         return
     }
 
+    console.log(row.firstHook)
+
     if (!row.firstHook){
-        progressStore.firstHook(row.survivorName)
+        progressStore.firstHook(row.survivorId)
     }
     else {
-        progressStore.survivorDead(row.survivorName)
+        progressStore.survivorDead(row.survivorId)
     }
+    console.log(progressStore.killerEvents)
 }
 
 function survivorEscaped(rowIndex: number){
@@ -43,7 +48,7 @@ function survivorEscaped(rowIndex: number){
         return
     }
 
-    progressStore.escaped(row.survivorName)
+    progressStore.escaped(row.survivorId)
 }
 </script>/
 

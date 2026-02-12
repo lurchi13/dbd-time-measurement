@@ -7,7 +7,6 @@ import Timer from './Timer.vue';
 import SurvivorProgress from './SurvivorProgress.vue';
 import { useTeamStore } from '../stores/teamStore';
 import KillerProgress from './KillerProgress.vue';
-import type { TeamMember } from '../models/Teams';
 import Drawer from 'primevue/drawer'
 
 const teamStore = useTeamStore()
@@ -38,7 +37,7 @@ const progressButtons = computed(() => {
 
 function handleGameStateChange() {
   if (!progressStore.isRunning){
-    progressStore.startGame(teamStore.survivors ?? [])
+    progressStore.startGame()
   }
   else {
     progressStore.stopGame()
@@ -57,10 +56,6 @@ function addEvent(event: 'gen' | 'exitOpen' | 'hatchEscape'){
     }
   }
 }
-
-const survivorEvents = computed(() => {
-  return teamStore.survivors?.map(survivor => {return {name: survivor.toString(), id: survivor} as TeamMember}) ?? []
-})
 </script>
 
 <template>
@@ -78,7 +73,7 @@ const survivorEvents = computed(() => {
       </Drawer>
       <Button label="View Survivor Results" @click="survivorProgressVisible = true" />
       <Drawer v-model:visible="killerProgressVisible" header="Killer Results" position="right" class="!w-full md:!w-100 lg:!w-[70rem]">
-          <KillerProgress :gameStart="progressStore.gameStart" :end-game-collapse="progressStore.endGameCollapseStart ?? undefined" :game-end="progressStore.isRunning ? undefined : progressStore.currentGameTime" :events="progressStore.events" :survivors="survivorEvents"></KillerProgress>
+          <KillerProgress :gameStart="progressStore.gameStart" :end-game-collapse="progressStore.endGameCollapseStart ?? undefined" :game-end="progressStore.isRunning ? undefined : progressStore.currentGameTime" :events="progressStore.events" :survivors="teamStore.survivors"></KillerProgress>
       </Drawer>
       <Button label="View Killer Results" @click="killerProgressVisible = true" />
     </div>
