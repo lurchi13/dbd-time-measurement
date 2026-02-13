@@ -91,6 +91,8 @@ function editTeamMember(event: DataTableCellEditCompleteEvent){
         </template>
         </Column>
     </DataTable>
+    <Button label="Undo Last Survivor Event" @click="progressStore.undoLastSurvivorEvent"></Button>
+    <Button label="Undo Last Killer Event" @click="progressStore.undoLastKillerEvent"></Button>
 </template>
 
 <style scoped>

@@ -1,5 +1,5 @@
 import { defineStore } from "pinia"
-import { computed, ref } from "vue"
+import { computed, ref, type Ref } from "vue"
 import type { FirstHook, SurvivorDead, GenDone, Escaped, ExitOpen, HatchEscape, EventType, SurvivorEventType, KillerEventType } from "../models/ProgressEvents"
 import { useTeamStore } from "./teamStore"
 
@@ -185,6 +185,48 @@ export const useProgressStore = defineStore('progress', () => {
     function hatchClosed(){
         endGameCollapseStart.value = currentGameTime.value
     }
+    function undoLastEvent(ref: Ref<EventType[]>, ) {
+        const lastEvent = ref.value.find((value, index) => index === ref.value.length - 1)
+        ref.value = ref.value.filter((value, index) => index !== ref.value.length - 1)
+        return lastEvent
+    }
+
+    function undoAliveSurvivorLeft(survivorId: number) {
+        internalAliveSurvivors.value = [...internalAliveSurvivors.value, survivorId]
+    }
+
+    function undoLastSurvivorEvent() {
+        const lastEvent = undoLastEvent(internalSurvivorEvents)
+
+        if (lastEvent === undefined){
+            return
+        }
+
+        switch (lastEvent?.type){
+            case 'escaped':
+                escapedSurvivorCount.value --
+                undoAliveSurvivorLeft(lastEvent.survivorId)
+                break
+            case 'exitOpen':
+                exitOpened.value = false
+                break
+            case 'gen':
+                repairedGenCount.value --
+                break
+            case 'hatchEscape':
+                escapedSurvivorCount.value --
+                // TODO: reset internal Alive Survivors
+        }
+    }
+    function undoLastKillerEvent() {
+        const lastEvent = undoLastEvent(internalKillerEvents) as KillerEventType
+
+        switch (lastEvent?.type){
+            case 'dead':
+                deadSurvivorCount.value --
+                undoAliveSurvivorLeft(lastEvent.survivorId)
+        }
+    }
 
     return {
         deadSurvivorCount,
@@ -212,6 +254,8 @@ export const useProgressStore = defineStore('progress', () => {
         exitOpen,
         escaped,
         hatchEscape,
-        hatchClosed
+        hatchClosed,
+        undoLastSurvivorEvent,
+        undoLastKillerEvent
     }
 })
