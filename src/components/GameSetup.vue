@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import type { Team } from '../models/Teams';
 import Button from 'primevue/button'
 import TeamSetup from './TeamSetup.vue';
 import Message from 'primevue/message';

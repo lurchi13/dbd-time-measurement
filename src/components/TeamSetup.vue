@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import type { Team } from '../models/Teams';
 import Select from 'primevue/select'
 import Card from 'primevue/card'
 import DataTable from 'primevue/datatable';
