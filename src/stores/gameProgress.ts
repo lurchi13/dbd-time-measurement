@@ -103,7 +103,7 @@ export const useProgressStore = defineStore('progress', () => {
         gameStart.value = new Date()
         endGameCollapseStart.value = null
         currentGameTime.value = gameStart.value
-        internalInterval.value = setInterval(updateGameTime, 1)
+        internalInterval.value = setInterval(updateGameTime, 100)
         internalKillerEvents.value = []
         internalSurvivorEvents.value = []
     }
