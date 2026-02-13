@@ -7,6 +7,8 @@ import SurvivorKillButton from './SurvivorKillButton.vue';
 import { useProgressStore } from '../stores/gameProgress';
 import { useTeamStore } from '../stores/teamStore';
 import { computed } from 'vue';
+import { type DataTableCellEditCompleteEvent } from 'primevue/datatable';
+import InputText from 'primevue/inputtext'
 
 const progressStore = useProgressStore()
 const teamStore = useTeamStore()
@@ -50,11 +52,26 @@ function survivorEscaped(rowIndex: number){
 
     progressStore.escaped(row.survivorId)
 }
+
+function editTeamMember(event: DataTableCellEditCompleteEvent){
+    let { data, newValue } = event; 
+    
+    if (teamStore.survivorTeam === undefined){
+        return
+    }
+
+    teamStore.renameTeamMember(teamStore.survivorTeam, data.survivorId, newValue)
+}
+
 </script>/
 
 <template>
-    <DataTable :value="survivorTimes">
-        <Column field="survivorName" header="Survivor Name"></Column>
+    <DataTable :value="survivorTimes" editMode="cell" @cell-edit-complete="editTeamMember">
+        <Column field="survivorName" header="Survivor Name">
+            <template #editor="{ data, field }">
+                <InputText v-model="data[field]" fluid/>
+            </template>
+        </Column>
         <Column header="First Hook">
             <template #body="slotProps">
                 <Timer v-if="slotProps.data.alive || slotProps.data.firstHook !== undefined" :start-time="slotProps.data.firstHook?.referenceTime ?? progressStore.lastKillerEvent" :end-time="slotProps.data.firstHook?.eventTime ?? progressStore.currentGameTime"></Timer>
