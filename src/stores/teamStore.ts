@@ -3,36 +3,23 @@ import { computed, ref } from "vue"
 import type { Team, TeamMember } from "../models/Teams"
 
 export const useTeamStore = defineStore('teams', () => {
-    const teams = ref<Team[]>([
-        {
-            name: "Sables",
-            members: [
-                {id: 1, name: "A"},
-                {id: 2, name: "B"},
-                {id: 3, name: "C"},
-                {id: 4, name: "D"},
-                {id: 5, name: "E"},
-            ]
-        },
-        {
-            name: "Woods",
-            members: [
-                {id: 6, name: "F"},
-                {id: 7, name: "G"},
-                {id: 8, name: "H"},
-                {id: 9, name: "I"},
-                {id: 10, name: "J"},
-            ]
-        }
-    ])
+    const teams = ref<Team[]>([])
+    console.log(JSON.stringify(teams.value))
     const internalKillerTeam = ref<string>()
     const internalKiller = ref<number>()
     const internalSurvivorTeam = ref<string>()
     const internalSurvivors = ref<number[]>()
 
+    const hasTeams = computed(() => teams.value.length > 0)
+
+    function loadTeams(newTeams: Team[]){
+        teams.value = newTeams
+    }
+
     function getTeam(teamName: string) : Team | undefined{
         return teams.value.find(team => team.name === teamName)
     }
+
 
     function getTeamMember(teamName: string, memberId: number): TeamMember | undefined{
         const team = getTeam(teamName)
@@ -139,6 +126,8 @@ export const useTeamStore = defineStore('teams', () => {
         survivors,
         killerId,
         ready,
+        hasTeams,
+        loadTeams,
         getTeam,
         getTeamMember,
         checkTeamExists,

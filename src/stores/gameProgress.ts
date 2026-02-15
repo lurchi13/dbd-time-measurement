@@ -186,8 +186,8 @@ export const useProgressStore = defineStore('progress', () => {
         endGameCollapseStart.value = currentGameTime.value
     }
     function undoLastEvent(ref: Ref<EventType[]>, ) {
-        const lastEvent = ref.value.find((value, index) => index === ref.value.length - 1)
-        ref.value = ref.value.filter((value, index) => index !== ref.value.length - 1)
+        const lastEvent = ref.value.find((_, index) => index === ref.value.length - 1)
+        ref.value = ref.value.filter((_, index) => index !== ref.value.length - 1)
         return lastEvent
     }
 
