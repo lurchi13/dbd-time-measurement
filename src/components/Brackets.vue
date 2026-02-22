@@ -50,14 +50,11 @@
   </RequiresBrackets>
 </template>
 
-<script setup>
-import Card from 'primevue/card'
-import { ref, computed } from 'vue'
-import MatchUp from './MatchUp.vue'
+<script setup lang="ts">
+import { computed } from 'vue'
 import VerticalMatchUp from './VerticalMatchUp.vue'
-import HorizontalMatchUp from './HorizontalMatchUp.vue'
 import { useGameStore } from '../stores/gameStore'
-import { useBracketStore } from '../stores/bracketStore'
+import { MatchUpTeamKeys, useBracketStore, type BracketSizes, type MatchUpIndices } from '../stores/bracketStore'
 import RequiresBrackets from './RequiresBrackets.vue'
 
 const gameStore = useGameStore()
@@ -65,7 +62,7 @@ const bracketStore = useBracketStore()
 
 const matchUps = computed(() => bracketStore.brackets)
 
-function normalizedName(firstTeamName, secondTeamName) {
+function normalizedName(firstTeamName: string, secondTeamName: string) {
   switch(firstTeamName.localeCompare(secondTeamName)){
     case (-1):
       return `${firstTeamName}|${secondTeamName}`;
@@ -74,68 +71,50 @@ function normalizedName(firstTeamName, secondTeamName) {
     case (1):
       return `${secondTeamName}|${firstTeamName}`;
   }
+  return ""
 }
 
-const games = computed(() => gameStore.games)
-
-const matchUpsWithGames = computed(() => {
+const matchUpsWithGames = computed((): any => {
   const matchUpLookup = Object.fromEntries(
     Object.entries(matchUps.value).flatMap(
       ([bracketSize, matchUps]) => Object.entries(matchUps).map(([matchUpIndex, matchUp]) => [normalizedName(matchUp.firstTeam ?? '', matchUp.secondTeam ?? ''), {matchUp: matchUp, bracketSize, matchUpIndex,  games: []}])
     )
-)
+  ) as any
   gameStore.games.forEach(game => {
     const searchKey = normalizedName(game.killerTeam, game.survivorTeam)
     matchUpLookup[searchKey].games.push(game)
   })
 
-  return  Object.values(matchUpLookup).reduce((acc, matchUp) => ({...acc, [matchUp.bracketSize]: {...(acc[matchUp.bracketSize] || {}), [matchUp.matchUpIndex]: {...matchUp.matchUp, games: matchUp.games}}}), {})
+  return  Object.values(matchUpLookup).reduce((acc: any, matchUp: any) => ({...acc, [matchUp.bracketSize]: {...(acc[matchUp.bracketSize] || {}), [matchUp.matchUpIndex]: {...matchUp.matchUp, games: matchUp.games}}}), {})
 })
 
-const leftSemis = ref([
-  { name: 'Winner LQ1', seed: '-' },
-  { name: 'Winner LQ2', seed: '-' }
-])
-
-const rightSemis = ref([
-  { name: 'Winner RQ1', seed: '-' },
-  { name: 'Winner RQ2', seed: '-' }
-])
-
-const finals = ref([
-  { name: 'Winner Left', seed: '-' },
-  { name: 'Winner Right', seed: '-' }
-])
-
-function registerWin(teamName, index, bracketSize){
+function registerWin(teamName: string, index: number, bracketSize: number){
   const nextBracketSize = bracketSize / 2
   const correctedIndex = index - 1 
   const nextBracketIndex = Math.floor(correctedIndex / 2)
 
   let elementName = correctedIndex % 2 == 0 ? 'firstTeam' : 'secondTeam'
-  const existingNextBracket = matchUps.value?.[nextBracketSize]
-  const existingNextBracketMatchUp = existingNextBracket?.[nextBracketIndex]
-  if (teamName === undefined || bracketStore.getTeam(nextBracketSize, nextBracketIndex, elementName) === teamName){
+  if (teamName === undefined || bracketStore.getTeam(nextBracketSize.toString() as BracketSizes, nextBracketIndex.toString() as MatchUpIndices, elementName as MatchUpTeamKeys) === teamName){
     return
   }
 
-  bracketStore.setTeam(nextBracketSize, nextBracketIndex, elementName, teamName)
+  bracketStore.setTeam(nextBracketSize.toString() as BracketSizes, nextBracketIndex.toString() as MatchUpIndices, elementName as MatchUpTeamKeys, teamName)
 }
 
-function getMatchUp(bracketSize, matchUpIndex) {
+function getMatchUp(bracketSize: number, matchUpIndex: number) {
   return matchUpsWithGames.value[bracketSize.toString()]?.[(matchUpIndex - 1).toString()]
 }
 
-function quarterStartRow(matchUpIndex){
+function quarterStartRow(matchUpIndex: number){
   return ((matchUpIndex - 1) % 2) * 4 + 1
 }
 
-function quarterColumn(matchUpIndex) {
+function quarterColumn(matchUpIndex: number) {
   return matchUpIndex <= 2 ? 1 : 5
 }
 
 
-function semiColumn(matchUpIndex) {
+function semiColumn(matchUpIndex: number) {
   return (matchUpIndex) * 2
 }
 </script>
