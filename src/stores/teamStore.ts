@@ -109,7 +109,7 @@ export const useTeamStore = defineStore('teams', () => {
     })
 
     const killerName = computed(() => {
-        teams.value.find(() => {
+        return teams.value.find(() => {
             const killerTeam = teams.value.find(team => internalKillerTeam.value === team.name)
 
             if (killerTeam === undefined){

@@ -2,7 +2,7 @@ import { defineStore } from "pinia"
 import { computed, ref, type Ref } from "vue"
 import type { FirstHook, SurvivorDead, GenDone, Escaped, ExitOpen, HatchEscape, EventType, SurvivorEventType, KillerEventType } from "../models/ProgressEvents"
 import { useTeamStore } from "./teamStore"
-import { useGameStore } from "./gameStore"
+import { useGameStore, type GameModel } from "./gameStore"
 
 interface DateRow {
     referenceTime: Date,
@@ -125,20 +125,20 @@ export const useProgressStore = defineStore('progress', () => {
             
             const gameId = crypto.randomUUID()
 
-            const exportJson = {
+            const exportJson: GameModel = {
                 gameId: gameId, 
                 gameStart: gameStart.value,
-                endGameCollapse: endGameCollapseStart.value,
+                endGameCollapse: endGameCollapseStart.value ?? undefined,
                 gameEnd: currentGameTime.value,
-                killerTeam: teamStore.internalKillerTeam,
-                killerName: teamStore.killerName,
-                survivorTeam: teamStore.survivorTeam,
+                killerTeam: teamStore.internalKillerTeam || "",
+                // killerName: teamStore.killerName,
+                survivorTeam: teamStore.survivorTeam || "",
                 survivors: teamStore.survivors,
                 events: events.value
             }
-
+            gameStore.loadGame(exportJson)
             const json = JSON.stringify(exportJson, null, 2)
-            gameStore.loadGame(JSON.parse(json))
+            
 
             const blob = new Blob([json], { type: 'application/json' })
             const url = URL.createObjectURL(blob)
