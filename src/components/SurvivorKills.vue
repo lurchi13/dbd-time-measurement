@@ -24,14 +24,10 @@ const survivorTimes = computed(() => {
 function updateTimes(rowIndex: number){
     const row = survivorTimes.value[rowIndex]
 
-    console.log(row)
-
     if (row === undefined){
         console.error("Could not find row!")
         return
     }
-
-    console.log(row.firstHook)
 
     if (!row.firstHook){
         progressStore.firstHook(row.survivorId)
@@ -39,7 +35,6 @@ function updateTimes(rowIndex: number){
     else {
         progressStore.survivorDead(row.survivorId)
     }
-    console.log(progressStore.killerEvents)
 }
 
 function survivorEscaped(rowIndex: number){

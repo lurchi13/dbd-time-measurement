@@ -19,6 +19,7 @@ export interface GenDone extends BaseEvent {
 }
 
 export interface HatchEscape extends BaseEvent {
+    survivorId: number
     type: 'hatchEscape'
 }
 

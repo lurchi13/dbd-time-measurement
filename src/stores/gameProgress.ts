@@ -2,7 +2,7 @@ import { defineStore } from "pinia"
 import { computed, ref, type Ref } from "vue"
 import type { FirstHook, SurvivorDead, GenDone, Escaped, ExitOpen, HatchEscape, EventType, SurvivorEventType, KillerEventType } from "../models/ProgressEvents"
 import { useTeamStore } from "./teamStore"
-
+import { useGameStore } from "./gameStore"
 
 interface DateRow {
     referenceTime: Date,
@@ -119,14 +119,33 @@ export const useProgressStore = defineStore('progress', () => {
         if (internalInterval.value !== null){
             clearInterval(internalInterval.value)
             internalInterval.value = null
-            const json = JSON.stringify(events.value, null, 2)
+            
+            const teamStore = useTeamStore()
+            const gameStore = useGameStore()
+            
+            const gameId = crypto.randomUUID()
+
+            const exportJson = {
+                gameId: gameId, 
+                gameStart: gameStart.value,
+                endGameCollapse: endGameCollapseStart.value,
+                gameEnd: currentGameTime.value,
+                killerTeam: teamStore.internalKillerTeam,
+                killerName: teamStore.killerName,
+                survivorTeam: teamStore.survivorTeam,
+                survivors: teamStore.survivors,
+                events: events.value
+            }
+
+            const json = JSON.stringify(exportJson, null, 2)
+            gameStore.loadGame(JSON.parse(json))
 
             const blob = new Blob([json], { type: 'application/json' })
             const url = URL.createObjectURL(blob)
 
             const a = document.createElement('a')
             a.href = url
-            a.download = 'data.json'
+            a.download = `${gameId}.json`
             a.click()
 
             URL.revokeObjectURL(url)
@@ -148,8 +167,8 @@ export const useProgressStore = defineStore('progress', () => {
     function survivorDead(survivorId: number){
         deadSurvivorCount.value = deadSurvivorCount.value + 1
         internalAliveSurvivors.value = internalAliveSurvivors.value.filter(aliveId => aliveId !== survivorId)
-        checkGameOver()
         addKillerEvent({eventTime: currentGameTime.value, survivorId, type: 'dead'} as SurvivorDead)
+        checkGameOver()
     }
 
     function genDone(){
@@ -176,7 +195,12 @@ export const useProgressStore = defineStore('progress', () => {
     }
 
     function hatchEscape(){
-        addSurvivorEvent({eventTime: currentGameTime.value, type: 'hatchEscape'} as HatchEscape)
+        if (internalAliveSurvivors.value.length !== 1){
+            console.error("Not only one surrvivor alive :(")
+            return
+        }
+        const survivorId = internalAliveSurvivors.value[0]
+        addSurvivorEvent({eventTime: currentGameTime.value, survivorId, type: 'hatchEscape'} as HatchEscape)
         escapedSurvivorCount.value = escapedSurvivorCount.value + 1
         internalAliveSurvivors.value = []
         checkGameOver()

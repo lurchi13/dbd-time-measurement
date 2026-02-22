@@ -11,9 +11,16 @@
       @select="uploader($event)"
       custom-upload
       :show-upload-button="false"
-      dragDrop
+      :dragDrop="true"
       :multiple="multiple"
-    />
+    >
+    <template #empty>
+        <div class="flex items-center justify-center flex-col">
+            <i class="pi pi-cloud-upload !border-2 !rounded-full !p-8 !text-4xl !text-muted-color" />
+            <p class="mt-6 mb-0">Drag and drop files to here to upload.</p>
+        </div>
+    </template>
+    </FileUpload>
 
     <div v-if="error" class="error">
       {{ error }}
@@ -41,6 +48,7 @@ defineProps({
 const emit = defineEmits(['json-loaded'])
 
 const error = ref(null)
+const fileUploadRef = ref()
 
 function uploader(event: FileUploadSelectEvent) {
     const files: Blob[] = event.files
@@ -64,6 +72,7 @@ function uploader(event: FileUploadSelectEvent) {
         reader.onerror = (error) => console.log(error)
     }
     )
+    fileUploadRef.value.clear()
 }
 </script>
 

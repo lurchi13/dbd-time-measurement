@@ -5,7 +5,7 @@ import TeamSetup from './TeamSetup.vue';
 import Message from 'primevue/message';
 import { useTeamStore } from '../stores/teamStore';
 import { useRouter } from 'vue-router';
-import JSONUpload from './JSONUpload.vue';
+import RequiresTeams from './RequiresTeams.vue';
 
 const teamStore = useTeamStore()
 const router = useRouter()
@@ -72,7 +72,7 @@ function confirmChoices(){
     teamStore.chooseKiller(killerTeam.value, killer.value[0])
     teamStore.chooseSurvivors(survivorTeam.value, survivors.value)
  
-    router.push('/run')
+    router.push('/measure')
 }
 
 
@@ -100,7 +100,7 @@ function selectKiller(id: number){
 </script>
 
 <template>
-    <template v-if="teamStore.hasTeams">
+    <RequiresTeams>
         <div class="container">
             <TeamSetup title="Survivors" :selected-team="survivorTeam" @update:selected-team="changeSurvivorTeam" v-model:selected-members="survivors" @select-member="selectSurvivor"></TeamSetup>
             <TeamSetup title="Killer" :selected-team="killerTeam" @update:selected-team="changeKillerTeam" v-model:selected-members="killer" @select-member="selectKiller"></TeamSetup>
@@ -109,13 +109,7 @@ function selectKiller(id: number){
         <Button :disabled="errorMessage.length > 0" label="Confirm Teams" @click="confirmChoices">
             <Message v-if="errorMessage.length > 0" severity="error" size="small" variant="simple">{{ errorMessage }}</Message>
         </Button>
-    </template>
-    <template v-else>
-        Please upload your Teams from a JSON file:
-        <JSONUpload upload-label="Select Teams" :multiple="false" @json-loaded="teamStore.loadTeams">
-        </JSONUpload>
-    </template>
-
+    </RequiresTeams>
 </template>
 
 <style scoped>

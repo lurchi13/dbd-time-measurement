@@ -4,7 +4,6 @@ import type { Team, TeamMember } from "../models/Teams"
 
 export const useTeamStore = defineStore('teams', () => {
     const teams = ref<Team[]>([])
-    console.log(JSON.stringify(teams.value))
     const internalKillerTeam = ref<string>()
     const internalKiller = ref<number>()
     const internalSurvivorTeam = ref<string>()
@@ -98,19 +97,32 @@ export const useTeamStore = defineStore('teams', () => {
     const survivors = computed((): TeamMember[] => {
         const teamInformation = teams.value.find(team => team.name === internalSurvivorTeam.value)
 
-        console.log(teamInformation)
-
         if (teamInformation === undefined){
             return []
         }
-
-        console.log(teamInformation.members.filter(member => survivorIds.value?.includes(member.id)))
 
         return teamInformation.members.filter(member => survivorIds.value?.includes(member.id)) ?? []
     })
 
     const killerId = computed(() => {
         return internalKiller.value
+    })
+
+    const killerName = computed(() => {
+        teams.value.find(() => {
+            const killerTeam = teams.value.find(team => internalKillerTeam.value === team.name)
+
+            if (killerTeam === undefined){
+                return undefined
+            }
+
+            const killer = killerTeam.members.find(member => member.id === killerId.value)
+
+            if (killer === undefined){
+                return undefined
+            }
+            return killer.name
+        })
     })
 
     const ready = computed(() => {
@@ -125,6 +137,7 @@ export const useTeamStore = defineStore('teams', () => {
         survivorIds,
         survivors,
         killerId,
+        killerName,
         ready,
         hasTeams,
         loadTeams,

@@ -1,36 +1,25 @@
 <script setup lang="ts">
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-
 import Timer from './Timer.vue';
-import { type EventRow } from '../utils';
 
 const props = defineProps<{
-    gameStart: Date,
-    eventRows: EventRow[]
+    gameCount: number,
+    eventRows: any
 }>()
 </script>
 
 <template>
-    <DataTable :value="eventRows" rowGroupMode="subheader" groupRowsBy="section.id" sortMode="single" sortField="section.id">
+    <DataTable :value="eventRows" >
         <Column field="label" header="Event"></Column>
-        <Column header="Time In-Game">
+        <Column v-for="i in gameCount" :key="i" :header="`Game ${i}`">
             <template #body="slotProps">
-                <Timer v-if="slotProps.data.type === 'timer'" :start-time="gameStart" :end-time="slotProps.data.eventTime"></Timer>
-                <template></template>
-            </template>
-        </Column>
-        <Column header="Delta">
-            <template #body="slotProps">
-                <Timer v-if="slotProps.data.type === 'timer'" :start-time="slotProps.data.referenceTime" :end-time="slotProps.data.eventTime"></Timer>
-                <template v-if="slotProps.data.type === 'string'">
-                    {{ slotProps.data.value }}
+                <Timer v-if="slotProps.data.type === 'timer' && slotProps.data[(i-1).toString()]" :start-time="slotProps.data[(i-1).toString()].lastEvent" :end-time="slotProps.data[(i-1).toString()].eventTime"></Timer>
+                <template v-if="slotProps.data.type === 'string'  && slotProps.data[(i-1).toString()] !== undefined">
+                    {{ slotProps.data[(i-1).toString()] }}
                 </template>
             </template>
         </Column>
-        <template #groupheader="slotProps">
-            <span>{{ slotProps.data.section.label }}</span>
-        </template>
     </DataTable>
 </template>
 
