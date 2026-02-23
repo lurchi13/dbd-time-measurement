@@ -6,6 +6,7 @@ import type { EventType } from '../models/ProgressEvents';
 import Button from 'primevue/button';
 import MatchUpContestant from './MatchUpContestant.vue';
 import { type GameModel } from '../stores/gameStore';
+import GameResultDialog from './GameResultDialog.vue';
 
 const props = defineProps<{
   firstTeamName: string | undefined
@@ -15,23 +16,26 @@ const props = defineProps<{
   games?: GameModel[]
   isFinal?: boolean
 }>()
+
+const uncertenty = 500
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
 const emit = defineEmits(["winningTeam"])
 const winningTeam = ref("")
+const dialogIsVisible = ref(false)
 
 function analyzeTimeDiff(firstTeamTime: number, secondTeamTime: number){
   const timeDiff = firstTeamTime - secondTeamTime
 
-  if (timeDiff > 0.5){
+  if (timeDiff > uncertenty){
     return props.secondTeamName
   }
-  if (timeDiff < -0.5){
+  if (timeDiff < -uncertenty){
     return props.firstTeamName
   }
   return undefined
 }
 
-function determineWinner(teamScores: Record<string, EvaluationModel>){
+function determineWinner(teamScores: Record<string, EvaluationModel>, firstGenTeam: undefined | string, firstHookTeam: undefined | string){
     if (props.firstTeamName === undefined){
       return
     }
@@ -53,6 +57,14 @@ function determineWinner(teamScores: Record<string, EvaluationModel>){
     if (missingEventDiff < 0){
       return props.secondTeamName
     }
+
+    if (firstGenTeam !== undefined){
+      return firstGenTeam
+    }
+
+    if (firstHookTeam !== undefined){
+      return firstHookTeam
+    }
 }
 
 const gameResult = computed(() => {
@@ -70,6 +82,10 @@ const gameResult = computed(() => {
     initializeTeam(props.secondTeamName ?? null)
 
     let gameCount = 0
+    let firstHook: undefined | number = undefined
+    let firstHookTeam: undefined | string = undefined
+    let firstGen: undefined | number = undefined
+    let firstGenTeam: undefined | string = undefined
     const eventCallback = (): void => {}
     const mssingEventCallback = (): void => {}
     
@@ -77,6 +93,22 @@ const gameResult = computed(() => {
       if (teamScores[teamName] !== undefined){
         teamScores[teamName].totalAverageEventTime += result.totalAverageEventTime
         teamScores[teamName].missingEvents += result.missingEvents
+      }
+    }
+
+    const isFaster = (currentBest: undefined | number, gameTime: undefined | number) => {
+      if (currentBest === undefined){
+        return gameTime !== undefined
+      }
+      if (gameTime === undefined){
+        return false
+      }
+      const betterBoundary = currentBest - uncertenty
+      if (gameTime < betterBoundary){
+        return true
+      }
+      if (betterBoundary <= gameTime && gameTime -uncertenty < currentBest){
+        return undefined
       }
     }
 
@@ -94,6 +126,24 @@ const gameResult = computed(() => {
         updateTeam(killerTeam, result.killer)
         updateTeam(survivorTeam, result.survivors)
 
+        const firstHookFaster = isFaster(firstHook, result.firstHook)
+        if (firstHookFaster){
+          firstHook = result.firstHook
+          firstHookTeam = killerTeam
+        }
+        else if (firstHookFaster === undefined){
+          firstHookTeam = undefined
+        }
+        
+        const firstGenFaster = isFaster(firstGen, result.firstGen)
+        if (firstGenFaster){
+          firstGen = result.firstGen
+          firstGenTeam = survivorTeam
+        }
+        else if (firstGenFaster === undefined){
+          firstGenTeam = undefined
+        }
+
         gameCount++
     }
     )
@@ -106,7 +156,7 @@ const gameResult = computed(() => {
       })
     }
 
-    const winner = determineWinner(teamScores)
+    const winner = determineWinner(teamScores, firstGenTeam, firstHookTeam)
     if (winner) {
         winningTeam.value = winner
         emit("winningTeam", winner)
@@ -145,12 +195,12 @@ function getTeamResults(teamName: string | undefined){
             <template #content>
                 <div class="match-grid">
                     <MatchUpContestant :team-name="props.firstTeamName" :team-index="0" :result="getTeamResults(props.firstTeamName)" :style="{backgroundColor: getContestantBackgroundColor(props.firstTeamName)}" />
-                    <Button label="VS" :style="{ gridColumn: 1, gridRow: 2}" :disabled="games === undefined || games.length === 0"/>
+                    <Button label="VS" :style="{ gridColumn: 1, gridRow: 2}" :disabled="games === undefined || games.length === 0" @click="dialogIsVisible = true"/>
                     <MatchUpContestant :team-name="props.secondTeamName" :team-index="1" :result="getTeamResults(props.secondTeamName)" :style="{backgroundColor: getContestantBackgroundColor(props.secondTeamName)}" />
                 </div>
-
             </template>
         </Card>
+        <GameResultDialog v-if="games !== undefined" :games="games" :title="`${firstTeamName} vs ${secondTeamName}`" v-model:visible="dialogIsVisible"/>
     </div>
 
 </template>

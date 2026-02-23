@@ -68,7 +68,7 @@ function openSelectedDetails(){
             </JSONUpload>
         </template>
     </Card>
-    <GameResultDialog v-model:visible="isVisible" :games="selectedGameDetails">
+    <GameResultDialog v-model:visible="isVisible" :games="selectedGameDetails" title="Overview">
     </GameResultDialog>
 </template>
 

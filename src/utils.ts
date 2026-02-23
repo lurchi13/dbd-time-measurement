@@ -85,7 +85,9 @@ export interface EvaluationModel {
 
 export interface GameEvaluationModel {
     killer: EvaluationModel,
-    survivors: EvaluationModel
+    survivors: EvaluationModel,
+    firstGen?: number
+    firstHook?: number
 }
 
 export function processGameProgress(gameStart: Date, events: EventType [], eventCallback: (eventType: EventTypes, lastEvent: Date, eventTime: Date, relevantId?: number) => void, missingEventCallback: (eventType: EventTypes, relevantId?: number) => void): GameEvaluationModel{
@@ -97,6 +99,8 @@ export function processGameProgress(gameStart: Date, events: EventType [], event
     let lastKillerEvent: Date = gameStart
     let hookedSurvivors = 0
     let killedSurvivors = 0
+    let firstGen: undefined | number = undefined 
+    let firstHook: undefined | number = undefined
 
     const addSurvivorEvent =(event: EventType, relevantId?: number) => {
         const eventTime = event.eventTime
@@ -127,6 +131,9 @@ export function processGameProgress(gameStart: Date, events: EventType [], event
     events.map(event => {
         switch(event.type){
             case 'gen':
+                if (firstGen === undefined) {
+                    firstGen = event.eventTime.getTime() - gameStart.getTime() 
+                }
                 genCount++
                 addSurvivorEvent(event, event.index)
                 break
@@ -150,6 +157,9 @@ export function processGameProgress(gameStart: Date, events: EventType [], event
                 }
                 break
             case 'firstHook':
+                if (firstHook === undefined){
+                    firstHook = event.eventTime.getTime() - gameStart.getTime()
+                }
                 hookedSurvivors++
                 addKillerEvent(event)
                 break
@@ -178,7 +188,9 @@ export function processGameProgress(gameStart: Date, events: EventType [], event
     console.log(lastSurvivorEvent)
     return {
         survivors: getEvaluationTmp(gameStart, lastSurvivorEvent, missingSurvivorEvents),
-        killer: getEvaluationTmp(gameStart, lastKillerEvent, 8 - (hookedSurvivors +  killedSurvivors))
+        killer: getEvaluationTmp(gameStart, lastKillerEvent, 8 - (hookedSurvivors +  killedSurvivors)),
+        firstGen,
+        firstHook
     }
 }
 
@@ -194,7 +206,7 @@ function getEvaluationTmp(gameStart: Date, lastEvent: Date, missingEvents: numbe
     }
     else {
         averageEventTime = totalEventTime / completedEvents
-        missingPenalty = missingEvents * 30000
+        missingPenalty = missingEvents * 20000
     }
     
     const totalAverageEventTime = averageEventTime + missingPenalty

@@ -4,17 +4,10 @@ import { Button } from 'primevue';
 import SurvivorKills from './SurvivorKills.vue';
 import { useProgressStore } from '../stores/gameProgress';
 import Timer from './Timer.vue';
-import SurvivorProgress from './SurvivorProgress.vue';
-import { useTeamStore } from '../stores/teamStore';
-import KillerProgress from './KillerProgress.vue';
-import Drawer from 'primevue/drawer'
 
-const teamStore = useTeamStore()
 const progressStore = useProgressStore()
 const gameStateButtonLabel = computed(() => !progressStore.isRunning ? "Start New Game" : "Game Over")
 const hatchClosed = ref(false)
-const survivorProgressVisible = ref(false) 
-const killerProgressVisible = ref(false)
 const progressButtons = computed(() => {
   const progressEvents = [] as {label: string, eventType: 'gen' | 'exitOpen' | 'hatchEscape'}[]
   progressStore.nextPossibleSurvivorEvents.forEach(event => {
@@ -66,20 +59,6 @@ function addEvent(event: 'gen' | 'exitOpen' | 'hatchEscape'){
       <br/>
       <SurvivorKills />
   </template>
-  <template v-if="!progressStore.isRunning && progressStore.events.length > 0">
-    <div class="card flex justify-center">
-      <Drawer v-model:visible="survivorProgressVisible" header="Survivor Results" class="!w-full md:!w-100 lg:!w-[70rem]">
-          <SurvivorProgress :game-start="progressStore.gameStart" :end-game-collapse="progressStore.endGameCollapseStart ?? undefined" :game-end="progressStore.isRunning ? undefined : progressStore.currentGameTime" :events="progressStore.events"></SurvivorProgress>
-      </Drawer>
-      <Button label="View Survivor Results" @click="survivorProgressVisible = true" />
-      <Drawer v-model:visible="killerProgressVisible" header="Killer Results" position="right" class="!w-full md:!w-100 lg:!w-[70rem]">
-          <KillerProgress :gameStart="progressStore.gameStart" :end-game-collapse="progressStore.endGameCollapseStart ?? undefined" :game-end="progressStore.isRunning ? undefined : progressStore.currentGameTime" :events="progressStore.events" :survivors="teamStore.survivors"></KillerProgress>
-      </Drawer>
-      <Button label="View Killer Results" @click="killerProgressVisible = true" />
-    </div>
-  </template>
-  
-  
 </template>
 
 <style scoped>
