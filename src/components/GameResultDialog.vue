@@ -91,7 +91,7 @@ function getGameResult(eventLookup: Record<'killer' | 'survivors', SideProgressL
 
     const missingEventCallback = (): void => {}
 
-    return processGameProgress(details.gameStart, details.events, eventCallback, missingEventCallback)
+    return processGameProgress(details.gameStart, details.events, eventCallback, missingEventCallback, details.slugEvents)
 }
 
 function formatEvaluations(evaluations: Record<string,GameEvaluationModel>, side: 'killer' | 'survivors'){

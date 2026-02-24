@@ -2,7 +2,7 @@ import { defineStore } from "pinia"
 import { computed, ref, type Ref } from "vue"
 import type { FirstHook, SurvivorDead, GenDone, Escaped, ExitOpen, HatchEscape, EventType, SurvivorEventType, KillerEventType } from "../models/ProgressEvents"
 import { useTeamStore } from "./teamStore"
-import { useGameStore, type GameModel } from "./gameStore"
+import { useGameStore, type GameModel, FocusedSide } from "./gameStore"
 
 interface DateRow {
     referenceTime: Date,
@@ -24,6 +24,7 @@ export const useProgressStore = defineStore('progress', () => {
     const internalInterval = ref<number | null>(null)
     const internalAliveSurvivors = ref<number[]>([])
     const endGameCollapseStart = ref<Date | null>(null)
+    const internalFocusedSide = ref<FocusedSide>(FocusedSide.Killer)
 
     const internalSurvivorEvents = ref<Array<SurvivorEventType>>([])
     const internalKillerEvents = ref<Array<KillerEventType>>([])
@@ -78,6 +79,7 @@ export const useProgressStore = defineStore('progress', () => {
     const aliveSurvivors = computed(() => {
         return internalAliveSurvivors.value
     })
+    const focusedSide = computed(() => internalFocusedSide.value)
 
     function updateGameTime(){
         currentGameTime.value = new Date()
@@ -87,9 +89,14 @@ export const useProgressStore = defineStore('progress', () => {
         }
     }
 
-    function startGame(){
-        const teamStore = useTeamStore()
+    function startGame(focusedSide?: FocusedSide){
+        if (focusedSide === undefined){
+            console.error('Could not start game, no focus was set')
+            return 
+        }
 
+        const teamStore = useTeamStore()
+        
         if (!teamStore.ready){
             console.error("Could not start game, select teams first")
             return
@@ -106,6 +113,7 @@ export const useProgressStore = defineStore('progress', () => {
         internalInterval.value = setInterval(updateGameTime, 100)
         internalKillerEvents.value = []
         internalSurvivorEvents.value = []
+        internalFocusedSide.value = focusedSide
     }
 
     function checkGameOver(){
@@ -113,6 +121,11 @@ export const useProgressStore = defineStore('progress', () => {
             stopGame()
             return true
         }
+    }
+
+    function resumeGame(){
+        currentGameTime.value = new Date()
+        internalInterval.value = setInterval(updateGameTime, 100)
     }
 
     function stopGame(){
@@ -133,8 +146,9 @@ export const useProgressStore = defineStore('progress', () => {
                 killerTeam: teamStore.internalKillerTeam || "",
                 // killerName: teamStore.killerName,
                 survivorTeam: teamStore.survivorTeam || "",
-                survivors: teamStore.survivors,
-                events: events.value
+                events: events.value,
+                focusedSide: internalFocusedSide.value,
+                type: 'game'
             }
             gameStore.loadGame(exportJson)
             const json = JSON.stringify(exportJson, null, 2)
@@ -230,6 +244,9 @@ export const useProgressStore = defineStore('progress', () => {
             case 'escaped':
                 escapedSurvivorCount.value --
                 undoAliveSurvivorLeft(lastEvent.survivorId)
+                if (!isRunning.value){
+                    resumeGame()
+                }
                 break
             case 'exitOpen':
                 exitOpened.value = false
@@ -239,7 +256,10 @@ export const useProgressStore = defineStore('progress', () => {
                 break
             case 'hatchEscape':
                 escapedSurvivorCount.value --
-                // TODO: reset internal Alive Survivors
+                undoAliveSurvivorLeft(lastEvent.survivorId)
+                if (!isRunning.value){
+                    resumeGame()
+                }
         }
     }
     function undoLastKillerEvent() {
@@ -249,6 +269,9 @@ export const useProgressStore = defineStore('progress', () => {
             case 'dead':
                 deadSurvivorCount.value --
                 undoAliveSurvivorLeft(lastEvent.survivorId)
+                if (!isRunning.value){
+                    resumeGame()
+                }
         }
     }
 
@@ -270,6 +293,7 @@ export const useProgressStore = defineStore('progress', () => {
         canEscape,
         aliveSurvivors,
         endGameCollapseStart,
+        focusedSide,
         startGame,
         stopGame,
         firstHook,

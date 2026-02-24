@@ -1,14 +1,12 @@
 <script setup lang="ts">
-import DataTable from 'primevue/datatable';
 import Button from 'primevue/button';
 import Column from 'primevue/column';
 import Timer from './Timer.vue';
 import SurvivorKillButton from './SurvivorKillButton.vue';
 import { useProgressStore } from '../stores/gameProgress';
 import { useTeamStore } from '../stores/teamStore';
-import { computed } from 'vue';
-import { type DataTableCellEditCompleteEvent } from 'primevue/datatable';
-import InputText from 'primevue/inputtext'
+import { computed, onUnmounted } from 'vue';
+import SurvivorMeasurementTable from './SurvivorMeasurementTable.vue';
 
 const progressStore = useProgressStore()
 const teamStore = useTeamStore()
@@ -48,46 +46,38 @@ function survivorEscaped(rowIndex: number){
     progressStore.escaped(row.survivorId)
 }
 
-function editTeamMember(event: DataTableCellEditCompleteEvent){
-    let { data, newValue } = event; 
-    
-    if (teamStore.survivorTeam === undefined){
-        return
-    }
 
-    teamStore.renameTeamMember(teamStore.survivorTeam, data.survivorId, newValue)
-}
-
-</script>/
+onUnmounted(() => {
+    progressStore.stopGame()
+})
+</script>
 
 <template>
-    <DataTable :value="survivorTimes" editMode="cell" @cell-edit-complete="editTeamMember">
-        <Column field="survivorName" header="Survivor Name">
-            <template #editor="{ data, field }">
-                <InputText v-model="data[field]" fluid/>
-            </template>
-        </Column>
-        <Column header="First Hook">
-            <template #body="slotProps">
-                <Timer v-if="slotProps.data.alive || slotProps.data.firstHook !== undefined" :start-time="slotProps.data.firstHook?.referenceTime ?? progressStore.lastKillerEvent" :end-time="slotProps.data.firstHook?.eventTime ?? progressStore.currentGameTime"></Timer>
-            </template>
-        </Column>
-        <Column header="Dead">
-            <template #body="slotProps">
-                <Timer v-if="slotProps.data.firstHook !== undefined && (slotProps.data.alive ||slotProps.data.dead !== undefined)" :start-time="slotProps.data.dead?.referenceTime ?? progressStore.lastKillerEvent" :end-time="slotProps.data.dead?.eventTime ?? progressStore.currentGameTime"></Timer>
-            </template>
-        </Column>
-        <Column>
-        <template #body="slotProps">
-            <template v-if="slotProps.data.alive && progressStore.isRunning">
-                <SurvivorKillButton :firstHook="slotProps.data.firstHook" :dead="slotProps.data.dead" @click="updateTimes(slotProps.index)"></SurvivorKillButton>
-                <Button v-if="progressStore.canEscape" label="Escaped" @click="survivorEscaped(slotProps.index)"/>
-            </template>
+    <SurvivorMeasurementTable :table-data="survivorTimes">
+        <template #columns>
+            <Column header="First Hook">
+                <template #body="slotProps">
+                    <Timer v-if="slotProps.data.alive || slotProps.data.firstHook !== undefined" :start-time="slotProps.data.firstHook?.referenceTime ?? progressStore.lastKillerEvent" :end-time="slotProps.data.firstHook?.eventTime ?? progressStore.currentGameTime"></Timer>
+                </template>
+            </Column>
+            <Column header="Dead">
+                <template #body="slotProps">
+                    <Timer v-if="slotProps.data.firstHook !== undefined && (slotProps.data.alive ||slotProps.data.dead !== undefined)" :start-time="slotProps.data.dead?.referenceTime ?? progressStore.lastKillerEvent" :end-time="slotProps.data.dead?.eventTime ?? progressStore.currentGameTime"></Timer>
+                </template>
+            </Column>
+            <Column>
+                <template #body="slotProps">
+                    <template v-if="slotProps.data.alive && progressStore.isRunning">
+                        <SurvivorKillButton :firstHook="slotProps.data.firstHook" :dead="slotProps.data.dead" @click="updateTimes(slotProps.index)"></SurvivorKillButton>
+                        <Button v-if="progressStore.canEscape" label="Escaped" @click="survivorEscaped(slotProps.index)"/>
+                    </template>
+                </template>
+            </Column>
         </template>
-        </Column>
-    </DataTable>
-    <Button label="Undo Last Survivor Event" @click="progressStore.undoLastSurvivorEvent"></Button>
-    <Button label="Undo Last Killer Event" @click="progressStore.undoLastKillerEvent"></Button>
+        <template #buttons>
+        </template>
+    </SurvivorMeasurementTable> 
+
 </template>
 
 <style scoped>

@@ -1,13 +1,23 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { Button } from 'primevue';
 import SurvivorKills from './SurvivorKills.vue';
 import { useProgressStore } from '../stores/gameProgress';
-import Timer from './Timer.vue';
+import { FocusedSide } from '../stores/gameStore';
+import GameControlButton from './GameControlButton.vue';
+import Select from 'primevue/select';
+import { useTeamStore } from '../stores/teamStore';
+import { useRouter } from 'vue-router';
+
+const focusedSideOptions = ref([
+    {label: 'Killer', value: FocusedSide.Killer},
+    {label: 'Survivors', value: FocusedSide.Survivors}
+])
+const selectedFocusedSide = ref<null | FocusedSide>(null)
 
 const progressStore = useProgressStore()
-const gameStateButtonLabel = computed(() => !progressStore.isRunning ? "Start New Game" : "Game Over")
-const hatchClosed = ref(false)
+const teamStore = useTeamStore()
+const router = useRouter()
 const progressButtons = computed(() => {
   const progressEvents = [] as {label: string, eventType: 'gen' | 'exitOpen' | 'hatchEscape'}[]
   progressStore.nextPossibleSurvivorEvents.forEach(event => {
@@ -28,15 +38,6 @@ const progressButtons = computed(() => {
   return progressEvents
 })
 
-function handleGameStateChange() {
-  if (!progressStore.isRunning){
-    progressStore.startGame()
-  }
-  else {
-    progressStore.stopGame()
-  }
-}
-
 function addEvent(event: 'gen' | 'exitOpen' | 'hatchEscape'){
   if (event){
     switch (event){
@@ -49,16 +50,33 @@ function addEvent(event: 'gen' | 'exitOpen' | 'hatchEscape'){
     }
   }
 }
+
+onMounted(() => {
+  selectedFocusedSide.value = null
+    if (!teamStore.ready){
+        router.push("/measure/setup/game")
+    }
+})
 </script>
 
 <template>
-  <Button :label="gameStateButtonLabel" @click="handleGameStateChange"/><Timer v-if="progressStore.isRunning" :start-time="progressStore.gameStart" :end-time="progressStore.currentGameTime"></Timer><br/>
-  <template v-if="progressStore.isRunning">
-      <Button v-for="progressButton in progressButtons"  :key="progressButton?.label" :label="progressButton?.label" @click="addEvent(progressButton.eventType)"></Button>
-      <Button v-if="progressStore.hatchSpawned && !hatchClosed" severity="danger" label="Hatch Closed" @click="progressStore.hatchClosed"></Button>
-      <br/>
-      <SurvivorKills />
+  <template v-if="selectedFocusedSide === null || !progressStore.isRunning">
+    Which side will you focus on? <br>
+    <Select :options="focusedSideOptions" v-model="selectedFocusedSide" optionLabel="label" optionValue="value"></Select>
   </template>
+  <template v-if="selectedFocusedSide !== null">
+    <GameControlButton :is-running="progressStore.isRunning" :game-start="progressStore.gameStart" :current-game-time="progressStore.currentGameTime" @start-game="() => progressStore.startGame(selectedFocusedSide ?? undefined)" @stop-game="progressStore.stopGame"/>
+      <br/><br/>
+    <template v-if="progressStore.isRunning">
+        <Button v-for="progressButton in progressButtons"  :key="progressButton?.label" :label="progressButton?.label" @click="addEvent(progressButton.eventType)"></Button>
+        <Button v-if="progressStore.hatchSpawned && progressStore.endGameCollapseStart === null" severity="danger" label="Hatch Closed" @click="progressStore.hatchClosed"></Button>
+        <br/>
+        <SurvivorKills />
+    </template>
+  </template>
+  <br/>
+  <Button label="Undo Last Survivor Event" @click="progressStore.undoLastSurvivorEvent"></Button>
+  <Button label="Undo Last Killer Event" @click="progressStore.undoLastKillerEvent"></Button>
 </template>
 
 <style scoped>

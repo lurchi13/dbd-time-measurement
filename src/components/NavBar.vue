@@ -17,7 +17,18 @@ const items = ref([
     {
         label: 'Measure Times',
         icon: 'pi pi-clock',
-        command: () => router.push('/measure/setup')
+        items: [
+            {
+                label: 'Events', 
+                icon: 'pi pi-clock',
+                command: () => router.push('/measure/setup/game')
+            },
+            {
+                label: 'Slug', 
+                icon: 'pi pi-clock',
+                command: () => router.push('/measure/setup/slug')
+            }
+        ]
     },
     {
         label: 'Brackets',

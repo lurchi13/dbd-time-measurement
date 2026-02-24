@@ -4,11 +4,12 @@ import Button from 'primevue/button'
 import TeamSetup from './TeamSetup.vue';
 import Message from 'primevue/message';
 import { useTeamStore } from '../stores/teamStore';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import RequiresTeams from './RequiresTeams.vue';
 
 const teamStore = useTeamStore()
 const router = useRouter()
+const route = useRoute()
 
 const killerTeam = ref<string>()
 const killer = ref<number[]>([])
@@ -72,7 +73,7 @@ function confirmChoices(){
     teamStore.chooseKiller(killerTeam.value, killer.value[0])
     teamStore.chooseSurvivors(survivorTeam.value, survivors.value)
  
-    router.push('/measure')
+    router.push(`/measure/${route.params.mode}`)
 }
 
 

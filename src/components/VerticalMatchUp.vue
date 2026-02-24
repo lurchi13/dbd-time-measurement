@@ -115,7 +115,7 @@ const gameResult = computed(() => {
     props.games.map(game => {
         const events = game["events"].map((event): EventType => {return {...event, eventTime: new Date(event.eventTime)} as unknown as EventType})
 
-        const result = processGameProgress(new Date(game["gameStart"]), events, eventCallback, mssingEventCallback)
+        const result = processGameProgress(new Date(game["gameStart"]), events, eventCallback, mssingEventCallback, game.slugEvents)
 
         const killerTeam = game.killerTeam
         const survivorTeam = game.survivorTeam

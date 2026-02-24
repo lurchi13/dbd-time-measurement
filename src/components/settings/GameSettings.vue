@@ -62,9 +62,9 @@ function openSelectedDetails(){
         </Column>
     </DataTable>
     <Card>
-        <template #title>Upload Brackets</template>
+        <template #title>Upload Games</template>
         <template #content>
-            <JSONUpload upload-label="Select Brackets" :multiple="true" @json-loaded="loadGame">
+            <JSONUpload upload-label="Select Games" :multiple="true" @json-loaded="loadGame">
             </JSONUpload>
         </template>
     </Card>

@@ -3,13 +3,27 @@ interface BaseEvent {
     eventTime: Date
 }
 
-export interface FirstHook extends BaseEvent {
+interface EventWithSurvivorId extends BaseEvent {
     survivorId: number
+}
+
+export interface SlugStart extends EventWithSurvivorId {
+    type: 'slugStart'
+}
+
+export interface SlugPause extends EventWithSurvivorId {
+    type: 'slugPause'
+}
+
+export interface SlugEnd extends EventWithSurvivorId {
+    type: 'slugEnd'
+}
+
+export interface FirstHook extends EventWithSurvivorId {
     type: 'firstHook'
 }
 
-export interface SurvivorDead extends BaseEvent {
-    survivorId: number
+export interface SurvivorDead extends EventWithSurvivorId {
     type: 'dead'
 }
 
@@ -18,8 +32,7 @@ export interface GenDone extends BaseEvent {
     type: 'gen'
 }
 
-export interface HatchEscape extends BaseEvent {
-    survivorId: number
+export interface HatchEscape extends EventWithSurvivorId {
     type: 'hatchEscape'
 }
 
@@ -34,4 +47,5 @@ export interface Escaped extends BaseEvent {
 
 export type KillerEventType = FirstHook | SurvivorDead
 export type SurvivorEventType = GenDone | HatchEscape | ExitOpen | Escaped
+export type SlugEventType = SlugStart | SlugPause | SlugEnd
 export type EventType = KillerEventType | SurvivorEventType
