@@ -23,12 +23,12 @@ export enum MatchUpTeamKeys {
 }
 
 export type Bracket = Record<MatchUpIndices, MatchUp>
-export type Brackets = Record<BracketSizes, Bracket>
+export type Brackets = Record<AvailableBrackets, Bracket>
 
 export const useBracketStore = defineStore('brackets', () => {
     const internalBrackets = ref({} as Brackets)
 
-    function bracketHasMatchUp(bracketSize: BracketSizes, matchUpIndex: MatchUpIndices){
+    function bracketHasMatchUp(bracketSize: AvailableBrackets, matchUpIndex: MatchUpIndices){
         if (parseInt(matchUpIndex) > Math.floor(parseInt(bracketSize) / 2)){
             console.error("MatchUp does not exist for bracket")
             return false
@@ -36,32 +36,32 @@ export const useBracketStore = defineStore('brackets', () => {
         return true
     }
 
-    function getBracket(bracketSize: BracketSizes) {
+    function getBracket(bracketSize: AvailableBrackets) {
         return brackets.value?.[bracketSize]
     }
 
-    function getMatchUp(bracketSize: BracketSizes, matchUpIndex: MatchUpIndices){
+    function getMatchUp(bracketSize: AvailableBrackets, matchUpIndex: MatchUpIndices){
         if (bracketHasMatchUp(bracketSize, matchUpIndex)){
             return getBracket(bracketSize)?.[matchUpIndex]
         }
     }
 
-    function getTeam(bracketSize: BracketSizes, matchUpIndex: MatchUpIndices, teamKey: MatchUpTeamKeys){
+    function getTeam(bracketSize: AvailableBrackets, matchUpIndex: MatchUpIndices, teamKey: MatchUpTeamKeys){
         return getMatchUp(bracketSize, matchUpIndex)?.[teamKey]
     }
 
-    function setBracket(bracketSize: BracketSizes, newBracket: Bracket){
+    function setBracket(bracketSize: AvailableBrackets, newBracket: Bracket){
         internalBrackets.value = {...internalBrackets.value, [bracketSize]: newBracket}
     }
 
-    function setMatchUp(bracketSize: BracketSizes, matchUpIndex: MatchUpIndices, newMatchUp: MatchUp){
+    function setMatchUp(bracketSize: AvailableBrackets, matchUpIndex: MatchUpIndices, newMatchUp: MatchUp){
         if (bracketHasMatchUp(bracketSize, matchUpIndex)){
             const newBracket = {...(getBracket(bracketSize) || {}), [matchUpIndex]: newMatchUp}
             setBracket(bracketSize, newBracket)
         }
     }
 
-    function setTeam(bracketSize: BracketSizes, matchUpIndex: MatchUpIndices, teamKey: MatchUpTeamKeys, newTeam: string | undefined){
+    function setTeam(bracketSize: AvailableBrackets, matchUpIndex: MatchUpIndices, teamKey: MatchUpTeamKeys, newTeam: string | undefined){
         const newMatchUp = {...(getMatchUp(bracketSize, matchUpIndex) || {}), [teamKey]: newTeam}
         setMatchUp(bracketSize, matchUpIndex, newMatchUp)
     }

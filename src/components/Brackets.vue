@@ -8,10 +8,10 @@
         :key="'qf' + i"
         :startRow="quarterStartRow(i)"
         :column="quarterColumn(i)"
-        :firstTeamName="getMatchUp(8, i)?.firstTeam"
-        :secondTeamName="getMatchUp(8, i)?.secondTeam"
-        :games="getMatchUp(8, i)?.games"
-        @winningTeam="registerWin($event, i, 8)"
+        :firstTeamName="getMatchUp(AvailableBrackets.QuarterFinals, i)?.firstTeam"
+        :secondTeamName="getMatchUp(AvailableBrackets.QuarterFinals, i)?.secondTeam"
+        :games="getMatchUp(AvailableBrackets.QuarterFinals, i)?.games"
+        @winningTeam="registerQuarterFinalWin($event, i)"
       />
       <!-- SEMIFINALS -->
       <VerticalMatchUp
@@ -19,10 +19,10 @@
         :key="'sf' + i"
         :startRow="3"
         :column="semiColumn(i)"
-        :firstTeamName="getMatchUp(4, i)?.firstTeam"
-        :secondTeamName="getMatchUp(4, i)?.secondTeam"
-        :games="getMatchUp(4, i)?.games"
-        @winningTeam="registerWin($event, i, 4)"
+        :firstTeamName="getMatchUp(AvailableBrackets.SemiFinals, i)?.firstTeam"
+        :secondTeamName="getMatchUp(AvailableBrackets.SemiFinals, i)?.secondTeam"
+        :games="getMatchUp(AvailableBrackets.SemiFinals, i)?.games"
+        @winningTeam="registerSemiFinalWin($event, i)"
       />
 
       <!-- FINALS -->
@@ -30,20 +30,18 @@
         class="finals"
         :startRow="1"
         :column="3"
-        :firstTeamName="getMatchUp(2, 0)?.firstTeam"
-        :secondTeamName="getMatchUp(2, 0)?.secondTeam"
-        :games="getMatchUp(2, 0)?.games"
-        @winningTeam="registerWin($event, 0, 2)"
+        :firstTeamName="getMatchUp(AvailableBrackets.Finals, 1)?.firstTeam"
+        :secondTeamName="getMatchUp(AvailableBrackets.Finals, 1)?.secondTeam"
+        :games="getMatchUp(AvailableBrackets.Finals, 1)?.games"
       />
 
       <!-- THIRD PLACE-->
       <VerticalMatchUp
         :startRow="5"
         :column="3"
-        :firstTeamName="getMatchUp(3, 0)?.firstTeam"
-        :secondTeamName="getMatchUp(3, 0)?.secondTeam"
-        :games="getMatchUp(3, 0)?.games"
-        @winningTeam="registerWin($event, 0, 3)"
+        :firstTeamName="getMatchUp(AvailableBrackets.ThirdPlace, 1)?.firstTeam"
+        :secondTeamName="getMatchUp(AvailableBrackets.ThirdPlace, 1)?.secondTeam"
+        :games="getMatchUp(AvailableBrackets.ThirdPlace, 1)?.games"
       />
 
     </div>
@@ -54,7 +52,7 @@
 import { computed } from 'vue'
 import VerticalMatchUp from './VerticalMatchUp.vue'
 import { useGameStore } from '../stores/gameStore'
-import { MatchUpTeamKeys, useBracketStore, type BracketSizes, type MatchUpIndices } from '../stores/bracketStore'
+import { AvailableBrackets, MatchUpTeamKeys, useBracketStore, type MatchUpIndices } from '../stores/bracketStore'
 import RequiresBrackets from './RequiresBrackets.vue'
 
 const gameStore = useGameStore()
@@ -82,27 +80,43 @@ const matchUpsWithGames = computed((): any => {
   ) as any
   gameStore.games.forEach(game => {
     const searchKey = normalizedName(game.killerTeam, game.survivorTeam)
-    matchUpLookup[searchKey].games.push(game)
+    if (matchUpLookup[searchKey]){
+          matchUpLookup[searchKey].games.push(game)
+    }
   })
-
   return  Object.values(matchUpLookup).reduce((acc: any, matchUp: any) => ({...acc, [matchUp.bracketSize]: {...(acc[matchUp.bracketSize] || {}), [matchUp.matchUpIndex]: {...matchUp.matchUp, games: matchUp.games}}}), {})
 })
 
-function registerWin(teamName: string, index: number, bracketSize: number){
-  const nextBracketSize = bracketSize / 2
-  const correctedIndex = index - 1 
-  const nextBracketIndex = Math.floor(correctedIndex / 2)
+function registerTeam(teamName: string, nextBracket: AvailableBrackets, index: number){
+    const correctedIndex = index - 1 
+    const nextBracketIndex = Math.floor(correctedIndex / 2)
 
-  let elementName = correctedIndex % 2 == 0 ? 'firstTeam' : 'secondTeam'
-  if (teamName === undefined || bracketStore.getTeam(nextBracketSize.toString() as BracketSizes, nextBracketIndex.toString() as MatchUpIndices, elementName as MatchUpTeamKeys) === teamName){
-    return
-  }
-
-  bracketStore.setTeam(nextBracketSize.toString() as BracketSizes, nextBracketIndex.toString() as MatchUpIndices, elementName as MatchUpTeamKeys, teamName)
+    let elementName = correctedIndex % 2 == 0 ? 'firstTeam' : 'secondTeam'
+    if (teamName === undefined || bracketStore.getTeam(nextBracket, nextBracketIndex.toString() as MatchUpIndices, elementName as MatchUpTeamKeys) === teamName){
+      return
+    }
+    bracketStore.setTeam(nextBracket, nextBracketIndex.toString() as MatchUpIndices, elementName as MatchUpTeamKeys, teamName)
 }
 
-function getMatchUp(bracketSize: number, matchUpIndex: number) {
-  return matchUpsWithGames.value[bracketSize.toString()]?.[(matchUpIndex - 1).toString()]
+function registerSemiFinalWin(teamName: string, index: number){
+  registerTeam(teamName, AvailableBrackets.Finals, index)
+  const matchUp = getMatchUp(AvailableBrackets.SemiFinals, index)
+  let otherTeam: string
+  if (matchUp.firstTeam === teamName){
+    otherTeam = matchUp.secondTeam
+  }
+  else {
+    otherTeam = matchUp.firstTeam
+  }
+  registerTeam(otherTeam, AvailableBrackets.ThirdPlace, index)
+}
+
+function registerQuarterFinalWin(teamName: string, index: number){
+  registerTeam(teamName, AvailableBrackets.SemiFinals, index)
+}
+
+function getMatchUp(bracketSize: AvailableBrackets, matchUpIndex: number) {
+  return matchUpsWithGames.value[bracketSize]?.[(matchUpIndex - 1).toString()]
 }
 
 function quarterStartRow(matchUpIndex: number){

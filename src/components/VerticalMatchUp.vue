@@ -50,11 +50,11 @@ function determineWinner(teamScores: Record<string, EvaluationModel>, firstGenTe
 
     const missingEventDiff = (teamScores[props.firstTeamName]?.missingEvents || 8) - (teamScores[props.secondTeamName]?.missingEvents || 8)
 
-    if (missingEventDiff > 0 ){
+    if (missingEventDiff < 0 ){
       return props.firstTeamName
     }
 
-    if (missingEventDiff < 0){
+    if (missingEventDiff > 0){
       return props.secondTeamName
     }
 

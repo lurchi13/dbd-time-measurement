@@ -156,8 +156,6 @@ const gameResult = computed((): Record<'survivorDetails' | 'survivorEvaluation' 
     }
 
     const evaluations = Object.fromEntries(props.games.map((game, index) => [index.toString(), getGameResult(eventLookup, index.toString(), game)]))
-    console.log(eventLookup)
-    console.log(evaluations)
     return {survivorDetails: formatSurvivorProgress(eventLookup.survivors), survivorEvaluation: formatEvaluations(evaluations, 'survivors'), killerDetails: formatKillerProgress(eventLookup.killer), killerEvaluation: formatEvaluations(evaluations, 'killer')}
 })
 
