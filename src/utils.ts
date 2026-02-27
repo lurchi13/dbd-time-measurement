@@ -90,7 +90,7 @@ export interface GameEvaluationModel {
     firstHook?: number
 }
 
-export function processGameProgress(gameStart: Date, events: EventType [], eventCallback: (eventType: EventTypes, lastEvent: Date, eventTime: Date, relevantId?: number) => void, missingEventCallback: (eventType: EventTypes, relevantId?: number) => void, slugEvents?: SlugEventType[]): GameEvaluationModel{
+export function processGameProgress(gameStart: Date, gameEnd: Date, events: EventType [], eventCallback: (eventType: EventTypes, lastEvent: Date, eventTime: Date, relevantId?: number) => void, missingEventCallback: (eventType: EventTypes, relevantId?: number) => void, slugEvents?: SlugEventType[]): GameEvaluationModel{
     let lastSurvivorEvent = gameStart
     let genCount = 0
     let escapeCount = 0
@@ -153,8 +153,7 @@ export function processGameProgress(gameStart: Date, events: EventType [], event
         if (downedSurvivorCount === 1 && escapeCount === 0 && killedSurvivors === 2){
             return true
         }
-        return 
-        false
+        return false
     }
 
     const checkReducedCountChangesState = () => {
@@ -164,16 +163,22 @@ export function processGameProgress(gameStart: Date, events: EventType [], event
         return priorFulfilled && !nowFulfilled
     }
 
-    const handleSlugEnd = (eventTime: Date) => {
-        if (!checkReducedCountChangesState()){
-            return
-        }
+    const addSlugPenalty = (endTime: Date) => {
         if (downedCountdownStart) {
-            const downedTime = eventTime.getTime() - downedCountdownStart.getTime()
+            const downedTime = endTime.getTime() - downedCountdownStart.getTime()
             if (downedTime > slugOffset) {
                 slugPenalty += (downedTime - slugOffset) * 5
             }
         }
+    }
+
+    const handleSlugEnd = (eventTime: Date) => {
+        if (!checkReducedCountChangesState()){
+            return
+        }
+        addSlugPenalty(eventTime)
+        downedCountdownStart = undefined
+        millisecondsBeforePickup = 0
     }
 
     sortedEvents.forEach(event => {
@@ -257,11 +262,14 @@ export function processGameProgress(gameStart: Date, events: EventType [], event
                 if (!nowFulfilled){
                     return
                 }
+
                 if (pickedUpSurvivor === event.survivorId){
                     downedCountdownStart = new Date(event.eventTime.getTime() - millisecondsBeforePickup)
                     millisecondsBeforePickup = 0
                     pickedUpSurvivor = undefined
+                    return
                 }
+                downedCountdownStart = event.eventTime
                 break
             }
             case "slugPause": {
@@ -271,6 +279,7 @@ export function processGameProgress(gameStart: Date, events: EventType [], event
                 if (downedCountdownStart !== undefined){
                     millisecondsBeforePickup = event.eventTime.getTime() - downedCountdownStart.getTime()
                 }
+                pickedUpSurvivor = event.survivorId
                 break
             }
             case "slugEnd": {
@@ -278,6 +287,10 @@ export function processGameProgress(gameStart: Date, events: EventType [], event
             }
         }
     })
+    if (checkEnoughDownedSurvivors()){
+        addSlugPenalty(gameEnd)
+    }
+
     if (genCount < 5 && missingSurvivorEvents === 0){
         addMissingGenEvents()
     }
