@@ -91,7 +91,7 @@ function getGameResult(eventLookup: Record<'killer' | 'survivors', SideProgressL
 
     const missingEventCallback = (): void => {}
 
-    return processGameProgress(details.gameStart, details.gameEnd, details.events, eventCallback, missingEventCallback, details.slugEvents)
+    return processGameProgress(details.gameStart, details.gameEnd, details.customPenalty ?? 0, details.events, eventCallback, missingEventCallback, details.slugEvents)
 }
 
 function formatEvaluations(evaluations: Record<string,GameEvaluationModel>, side: 'killer' | 'survivors'){
@@ -149,13 +149,68 @@ function formatKillerProgress(progress: SideProgressLookupType){
     ]
 }
 
-const gameResult = computed((): Record<'survivorDetails' | 'survivorEvaluation' | 'killerDetails' | 'killerEvaluation', Record<string, TimeRow | string>[]>=> {
+function invertTeams(invertedTeams: Record<string, string[]>): Record<string, string> {
+    return Object.fromEntries(
+        Object.entries(invertedTeams).flatMap(([teamName, games]): [string, string][] => {
+            if (games.length === 1){
+                return [[games[0] ?? "", teamName]]
+            }
+            return games.map((gameId, index) => [gameId, `${teamName} ${index + 1}`])
+        })
+    )
+}
+
+const teams = computed(() => {
+    const invertedKillerTeamLookup = {} as Record<string, string[]>
+    const invertedSurvivorTeamLookup = {} as Record<string, string[]>
+    props.games.forEach((game, index) => {
+        const survivorTeam = game.survivorTeam
+        const killerTeam = game.killerTeam
+        const indexString = index.toString()
+        if (invertedKillerTeamLookup[killerTeam]){
+            invertedKillerTeamLookup[killerTeam].push(indexString)
+        }
+        else {
+            invertedKillerTeamLookup[killerTeam] = [indexString]
+        }
+
+        if (invertedSurvivorTeamLookup[survivorTeam]){
+            invertedSurvivorTeamLookup[survivorTeam].push(indexString)
+        }
+        else {
+            invertedSurvivorTeamLookup[survivorTeam] = [indexString]
+        }
+    })
+    return {killerTeams: invertTeams(invertedKillerTeamLookup), survivorTeams: invertTeams(invertedSurvivorTeamLookup)}
+})
+
+const gameResult = computed((): Record<'survivorDetails' | 'survivorEvaluation' | 'killerDetails' | 'killerEvaluation', Record<string, TimeRow | string>[]> => {
     const eventLookup = {survivors: {}, killer: {}} as Record<'killer' | 'survivors', SideProgressLookupType>
     if (props.games.length === 0){
         return {survivorDetails: [], survivorEvaluation: [], killerDetails: [], killerEvaluation: []}
     }
 
     const evaluations = Object.fromEntries(props.games.map((game, index) => [index.toString(), getGameResult(eventLookup, index.toString(), game)]))
+    const invertedKillerTeamLookup = {} as Record<string, string[]>
+    const invertedSurvivorTeamLookup = {} as Record<string, string[]>
+    props.games.forEach((game, index) => {
+        const survivorTeam = game.survivorTeam
+        const killerTeam = game.killerTeam
+        const indexString = index.toString()
+        if (invertedKillerTeamLookup[killerTeam]){
+            invertedKillerTeamLookup[killerTeam].push(indexString)
+        }
+        else {
+            invertedKillerTeamLookup[killerTeam] = [indexString]
+        }
+
+        if (invertedSurvivorTeamLookup[survivorTeam]){
+            invertedSurvivorTeamLookup[survivorTeam].push(indexString)
+        }
+        else {
+            invertedSurvivorTeamLookup[survivorTeam] = [indexString]
+        }
+    })
     return {survivorDetails: formatSurvivorProgress(eventLookup.survivors), survivorEvaluation: formatEvaluations(evaluations, 'survivors'), killerDetails: formatKillerProgress(eventLookup.killer), killerEvaluation: formatEvaluations(evaluations, 'killer')}
 })
 
@@ -170,13 +225,13 @@ const gameResult = computed((): Record<'survivorDetails' | 'survivorEvaluation' 
                     <AccordionPanel value="details">
                         <AccordionHeader>Details Survivors</AccordionHeader>
                         <AccordionContent>
-                            <ProgressTable :game-count="games.length" :event-rows="gameResult.survivorDetails"/>
+                            <ProgressTable :headers="teams.survivorTeams" :game-count="games.length" :event-rows="gameResult.survivorDetails"/>
                         </AccordionContent>
                     </AccordionPanel>
                     <AccordionPanel value="evaluation">
                         <AccordionHeader>Evaluation Survivors</AccordionHeader>
                         <AccordionContent>
-                            <ProgressTable :game-count="games.length" :event-rows="gameResult.survivorEvaluation"/>
+                            <ProgressTable :headers="teams.survivorTeams" :game-count="games.length" :event-rows="gameResult.survivorEvaluation"/>
                         </AccordionContent>
                     </AccordionPanel>
                 </Accordion>
@@ -184,13 +239,13 @@ const gameResult = computed((): Record<'survivorDetails' | 'survivorEvaluation' 
                     <AccordionPanel value="details">
                         <AccordionHeader>Details Killer</AccordionHeader>
                         <AccordionContent>
-                            <ProgressTable :game-count="games.length" :event-rows="gameResult.killerDetails"/>
+                            <ProgressTable :headers="teams.killerTeams" :game-count="games.length" :event-rows="gameResult.killerDetails"/>
                         </AccordionContent>
                     </AccordionPanel>
                     <AccordionPanel value="evaluation">
                         <AccordionHeader>Details Killer</AccordionHeader>
                         <AccordionContent>
-                            <ProgressTable :game-count="games.length" :event-rows="gameResult.killerEvaluation"/>
+                            <ProgressTable :headers="teams.killerTeams" :game-count="games.length" :event-rows="gameResult.killerEvaluation"/>
                         </AccordionContent>
                     </AccordionPanel>
                 </Accordion>

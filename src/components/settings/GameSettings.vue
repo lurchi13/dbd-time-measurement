@@ -2,12 +2,13 @@
 import Card from 'primevue/card'
 import JSONUpload from '../JSONUpload.vue'
 import { useGameStore, type GameModel } from '../../stores/gameStore';
-import DataTable from 'primevue/datatable'
+import DataTable, { type DataTableCellEditCompleteEvent } from 'primevue/datatable'
 import Column from 'primevue/column'
 import { computed, ref } from 'vue';
 import { formatDate } from '../../utils';
 import Button from 'primevue/button'
 import GameResultDialog from '../GameResultDialog.vue';
+import InputNumber from 'primevue/inputnumber';
 
 const gameStore = useGameStore()
 const games = computed(() => gameStore.games)
@@ -33,10 +34,16 @@ function openSelectedDetails(){
     selectedGameDetails.value = selectedGames.value
     isVisible.value = true
 } 
+
+function changeCustomPenalty(event: DataTableCellEditCompleteEvent){
+    let { data, newValue } = event; 
+    
+    gameStore.setCustomPenalty(data.gameId, newValue)
+}
 </script>
 
 <template>
-    <DataTable :value="games" v-model:selection="selectedGames" dataKey="gameId">
+    <DataTable :value="games" v-model:selection="selectedGames" dataKey="gameId" editMode="cell" @cell-edit-complete="changeCustomPenalty">
         <Column selectionMode="multiple" headerStyle="width: 3rem"></Column>
         <Column field="killerTeam" header="Killer Team"/>
         <Column field="survivorTeam" header="Survivor Team"/>
@@ -48,6 +55,14 @@ function openSelectedDetails(){
         <Column header="Game End">
             <template #body="slotProps">
                 {{ formatDate(slotProps.data.gameEnd) }}
+            </template>
+        </Column>
+        <Column field="customPenalty" header="Custom Penalty">
+            <template #body="slotProps">
+                {{ (slotProps.data.customPenalty ?? 0) / 1000 }}
+            </template>
+            <template #editor="{ data, field }">
+                <InputNumber :model-value="(data[field] ?? 0) / 1000" @update:model-value="(v) => data[field] = v*1000" fluid/>
             </template>
         </Column>
         <Column>

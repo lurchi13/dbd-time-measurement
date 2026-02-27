@@ -29,6 +29,7 @@ export interface GameModel extends BasicGameInformation {
     endGameCollapse?: Date,
     events: EventType[],
     slugEvents?: SlugEventType[],
+    customPenalty?: number,
     focusedSide: FocusedSide
     type: 'game'
 }
@@ -138,6 +139,12 @@ export const useGameStore = defineStore('games', () => {
         }
     }
 
+    function setCustomPenalty(gameId: string, customPenalty: number){
+        if (internalGames.value[gameId]){
+            internalGames.value[gameId].customPenalty = customPenalty
+        }
+    }
+
     function loadGameVersion(newGame: GameModel | GameSlugModel){
         const gameDetails = Object.entries(internalGameVersions.value).find(([_, game]) => game.gameStart < newGame.gameEnd && newGame.gameEnd > game.gameStart && newGame.killerTeam === game.killerTeam && newGame.survivorTeam === game.survivorTeam)
 
@@ -158,6 +165,7 @@ export const useGameStore = defineStore('games', () => {
     return {
         internalGames,
         loadGame,
+        setCustomPenalty,
         games
     }
 

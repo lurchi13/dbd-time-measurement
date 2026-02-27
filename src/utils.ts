@@ -90,7 +90,7 @@ export interface GameEvaluationModel {
     firstHook?: number
 }
 
-export function processGameProgress(gameStart: Date, gameEnd: Date, events: EventType [], eventCallback: (eventType: EventTypes, lastEvent: Date, eventTime: Date, relevantId?: number) => void, missingEventCallback: (eventType: EventTypes, relevantId?: number) => void, slugEvents?: SlugEventType[]): GameEvaluationModel{
+export function processGameProgress(gameStart: Date, gameEnd: Date, customPenalty: number, events: EventType [], eventCallback: (eventType: EventTypes, lastEvent: Date, eventTime: Date, relevantId?: number) => void, missingEventCallback: (eventType: EventTypes, relevantId?: number) => void, slugEvents?: SlugEventType[]): GameEvaluationModel{
     let lastSurvivorEvent = gameStart
     let genCount = 0
     let escapeCount = 0
@@ -309,7 +309,7 @@ export function processGameProgress(gameStart: Date, gameEnd: Date, events: Even
 
     return {
         survivors: getEvaluationTmp(gameStart, lastSurvivorEvent, missingSurvivorEvents),
-        killer: getEvaluationTmp(gameStart, lastKillerEvent, 8 - (hookedSurvivors +  killedSurvivors), slugPenalty),
+        killer: getEvaluationTmp(gameStart, lastKillerEvent, 8 - (hookedSurvivors +  killedSurvivors), slugPenalty + customPenalty),
         firstGen,
         firstHook
     }
